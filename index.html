@@ -188,6 +188,7 @@ function component(width, height, color, x, y, type) {
 } 
 
 function restart(){
+    myGameArea.stop();
     myGameScore=0;
     forScore=1;
     gamePaused = false;
@@ -207,7 +208,8 @@ function updateGameArea() {
     if (myGameArea.key && myGameArea.key == 38) {myGamePiece.speedY = -2; }
     if (myGameArea.key && myGameArea.key == 40) {myGamePiece.speedY = 2; }
     if(myGameArea.key == 32){missileNumber--;} 
-     if (myGameArea.key && myGameArea.key == 82) {restart();} 
+    if(missileNumber==-1){restart();}
+    if (myGameArea.key && myGameArea.key == 82) {restart();} 
     
     myMissile.missileUpdate();
     myMissile.missileFire();
