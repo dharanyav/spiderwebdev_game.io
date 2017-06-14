@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var myGamePiece;
+var myBackground;
+var myGameScore=0;
+var forScore=1;
+var gamePaused = false;
+var missileNumber =7;
+
+function startGame() {
+    myGamePiece = new component(100, 60, "ship.jpg", 10, 120, "image");
+    myBackground = new component(1000, 570, "bgwater.jpg", 0, 0, "background");
+    myTarget  = new component(100, 100, "submarine.jpg", 890, 120,"image");
+    myMissile = new component(0, 0, "missile.jpg", 0, 0,"image");
+    myScore = new component("17px", "Consolas", "black", 280, 40, "text");
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 1000;
+        this.canvas.height = 570;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        
+        this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('keydown', function (e) {
+                                             myGameArea.key = e.keyCode;
+
+                                             if(myGameArea.key==80){
+                                                if (!gamePaused) {
+                                                  clearInterval(myGameArea.interval);
+                                                  gamePaused = true;
+    
+                                                }
+                                                else {
+                                                  myGameArea.interval = setInterval(updateGameArea, 20);
+                                                  gamePaused = false;
+                                                  }
+                                              }     
+
+        })
+       window.addEventListener('keyup', function (e) {
+        if(myGameArea.key == 32||myGameArea.key == 80);
+                 
+          else  myGameArea.key = false;
+        })
+        },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    }
+}
+
+function component(width, height, color, x, y, type) {
+    this.type = type;
+    if (type == "image" || type == "background") {
+        this.image = new Image();
+        this.image.src = color;
+    }
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y; 
+    this.gravitySpeed = 2;   
+    this.update = function() {
+        ctx = myGameArea.context;
+        if (type == "image"||type=="background") {
+
+            ctx.drawImage(this.image, 
+                this.x, 
+                this.y,
+                this.width, this.height);
+        if (type == "background") {
+            ctx.drawImage(this.image, 
+                this.x + this.width, 
+                this.y,
+                this.width, this.height);
+            }
+        }
+        else{
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+        }   
+        
+    }
+    this.move = function(){
+       
+        this.x += this.speedX;
+        this.y += this.speedY + this.gravitySpeed;
+        this.hitBottom();
+    }
+    this.hitBottom = function() {
+        var rockbottom = myGameArea.canvas.height - this.height;
+        if (this.y > rockbottom) {
+            this.y = rockbottom;
+            this.gravitySpeed = -this.gravitySpeed;
+        }
+         if (this.y <0) {
+            this.y = 0;
+            this.gravitySpeed = -this.gravitySpeed;
+        }
+    }
+    this.newPos = function() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.type == "background") {
+            if (this.x == -(this.width)) {
+                this.x = 0;
+            }
+        }
+    }
+    this.missileUpdate = function() {
+        
+    
+        if (myGameArea.key == 32){
+            this.y=myGamePiece.y;
+            this.x=60;
+            this.width=50;
+            this.height=40;
+            myGameArea.key = false;
+            forScore=1;
+        } 
+        if (myTarget.x > (this.x + myMissile.width))  
+        {
+            ctx = myGameArea.context;
+            ctx.drawImage(this.image, 
+                this.x, 
+                this.y,
+                this.width, this.height);
+        }
+        else if(myTarget.y>(this.y+myMissile.height))
+              {
+            ctx = myGameArea.context;
+            ctx.drawImage(this.image, 
+                this.x, 
+                this.y,
+                this.width, this.height);
+             }
+            else if(myTarget.y+myTarget.width<this.y)
+                 {
+            ctx = myGameArea.context;
+            ctx.drawImage(this.image, 
+                this.x, 
+                this.y,
+                this.width, this.height);
+             }
+                else {
+                   if(this.x<myGameArea.canvas.width)  
+                    if(forScore){
+                      if(this.y+(this.height)/2==myTarget.height)
+                        myGameScore+=10;
+                      else myGameScore++;
+                        forScore=0;
+                      }
+                }
+    }  
+   
+
+   this.missileFire = function(){
+        this.x += this.speedX;
+        this.y += this.speedY;
+    }  
+
+    this.scoreUpdate = function(){
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+    }
+} 
+
+function restart(){
+    myGameScore=0;
+    forScore=1;
+    gamePaused = false;
+    missileNumber =7;
+    startGame();
+}    
+    
+
+function updateGameArea() {
+    myGameArea.clear();
+    myBackground.speedX = -4;
+    myBackground.newPos();    
+    myBackground.update();
+    myGamePiece.speedX = 0;
+    myGamePiece.speedY = 0;   
+    myMissile.speedX =5;
+    if (myGameArea.key && myGameArea.key == 38) {myGamePiece.speedY = -2; }
+    if (myGameArea.key && myGameArea.key == 40) {myGamePiece.speedY = 2; }
+    if(myGameArea.key == 32){missileNumber--;} 
+     if (myGameArea.key && myGameArea.key == 82) {restart();} 
+    
+    myMissile.missileUpdate();
+    myMissile.missileFire();
+    
+    myGamePiece.newPos();    
+    myGamePiece.update();
+    myTarget.move();
+    myTarget.update();
+    myScore.text="r:restart p:pause/resume Use arrow keys to move     SCORE:"+myGameScore+" MISSILES:"+missileNumber;
+    myScore.update();
+   
+}
+
+</script>
+</body>
+</html>
